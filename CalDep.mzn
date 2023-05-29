@@ -7,7 +7,7 @@ int: Min;
 int: Max;
 %Recordar que se debe incluir los negativos en el dominio.
 array [1..2*(n-1), 1..n] of var -n..n: Cal;
-array [2..2*(n-1), 1..n ] of var int: Costos;
+array [1..2*(n-1)+1, 1..n ] of var int: Costos;
 array[1..n] of var int: sum_costos;
 
 %Garantiza que todos los elemntos de las filas de Cal sean dftes.
@@ -54,12 +54,28 @@ constraint forall(i in 1..2*(n-1), j in 1..n, k in 1..n where k!= j)(
 constraint forall(j in 1..n, i in 1..2*(n-1)-1)(
   abs(Cal[i,j]) != abs(Cal[i+1,j]) 
 );
+constraint forall(j in 1..n)(
+   if Cal[1, j] < 0 then 
+     Costos[1,j] =  D[j, abs(Cal[1,j])]
+   else
+     Costos[1,j] = 0
+   endif
+   
+);
+
+constraint forall(j in 1..n)(
+  if Cal[2*(n-1), j] < 0 then
+      Costos[2*(n-1)+1, j] = D[abs(Cal[2*(n-1), j]), j]
+   else
+     Costos[2*(n-1)+1, j] = 0 
+   endif
+);
 
 constraint
     forall(j in 1..n) (
        forall(i in 2..2*(n-1) )(
         if Cal[i-1,j] < 0 /\ Cal[i,j] > 0 then
-              Costos[i,j] = 2*D[j, abs(Cal[i-1,j])]
+              Costos[i,j] = D[abs(Cal[i-1,j]),j]
         else
            if Cal[i-1 ,j] > 0 /\ Cal[i,j] < 0 then
               Costos[i,j] =  D[j, abs(Cal[i,j])]
@@ -76,7 +92,7 @@ constraint
 
 
 constraint forall(j in 1..n) (
-    sum_costos[j] = sum([Costos[i,j] | i in 2..2*(n-1)])
+    sum_costos[j] = sum([Costos[i,j] | i in 1..2*(n-1)+1])
 );
 
 solve minimize sum([sum_costos[j]| j in 1..n]);
