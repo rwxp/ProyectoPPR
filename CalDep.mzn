@@ -9,6 +9,43 @@ int: Max;
 array [1..2*(n-1), 1..n] of var -n..n: Cal;
 array [1..2*(n-1)+1, 1..n ] of var int: Costos;
 array[1..n] of var int: sum_costos;
+array[1..2*(n-1), 1..n] of var 0..n: ConteoPerm;
+array[1..2*(n-1), 1..n] of var 0..n: ConteoGira;
+
+
+
+%Calculando ConteoPerm
+constraint forall (e in 1..n) (if Cal[1,e]>0 then (ConteoPerm[1,e]=1) 
+                               else (ConteoPerm[1,e]=0) endif);
+                               
+constraint forall (e in 1..n, f in 2..2*(n-1)) (if Cal[f,e]>0 then 
+                  (ConteoPerm[f,e]=ConteoPerm[f-1,e]+1) 
+                  else (ConteoPerm[f,e]=0) endif);
+
+% Restringiendo las permanencias a ser inferiores o iguales a Max
+constraint forall (e in 1..n) (max([ConteoPerm[f,e]| f in 1..2*(n-1) where ConteoPerm[f,e]>0]) <= Max);
+
+% Restringiendo las permanencias a ser superiores o iguales a Min
+constraint forall (e in 1..n) (min([ConteoPerm[f,e]| f in 1..2*(n-1) where ConteoPerm[f,e]>0]) >= Min);
+
+%----------------------------------------------------------------------
+
+%Calculando ConteoGira
+constraint forall (e in 1..n) (if Cal[1,e]<0 then (ConteoGira[1,e]=1) 
+                               else (ConteoGira[1,e]=0) endif);
+                               
+constraint forall (e in 1..n, f in 2..2*(n-1)) (if Cal[f,e]<0 then 
+                  (ConteoGira[f,e]=ConteoGira[f-1,e]+1) 
+                  else (ConteoGira[f,e]=0) endif);
+
+% Restringiendo las giras a ser inferiores o iguales a Max
+constraint forall (e in 1..n) (max([ConteoGira[f,e]| f in 1..2*(n-1) where ConteoGira[f,e]>0]) <= Max);
+
+% Restringiendo las giras a ser superiores o iguales a Min
+constraint forall (e in 1..n) (min([ConteoGira[f,e]| f in 1..2*(n-1) where ConteoGira[f,e]>0]) >= Min);
+
+
+%-------------------------------------------------------
 
 %Garantiza que todos los elemntos de las filas de Cal sean dftes.
 constraint forall(i in 1..2*(n-1)) (
@@ -27,54 +64,6 @@ constraint forall(j in 1..n, k in 1..n where j!=k)(
   exists(i1, i2 in 1..2*(n-1))(
     Cal[i1,j]==k /\ Cal[i2,j]==-k
   )
-);
-
-%Garantiza que no exista el inverso aditivo para cada fila.
-% constraint forall(i in 1..2*(n-1) )(
-%   forall(j in 1..(n-1), k in 1..n where j != k)(
-%     Cal[i,j]==k /\ Cal[i,j+1] != -k
-%   )
-% );
-
-%Garantiza que toda gira se encuentre en el rango [Min,Max]
-constraint forall(j in 1..n)(
-  sum(i in 1..2*(n-1)-1)(if Cal[i,j] < 0 /\ Cal[i+1,j] < 0 then 1 else 0 endif)+1 >= Min /\
-  sum(i in 1..2*(n-1)-1)(if Cal[i,j] < 0 /\ Cal[i+1,j] < 0 then 1 else 0 endif)+1 <= Max 
-  
-
-);
-%%la idea es sacar ell min y max de giras
-% constraint forall(j in 1..n) (
-%     let {
-%         array [1..2*(n-1)] of var int: consecutiveNegatives;
-%         var int: minNegatives = n + 1;
-%         var int: maxNegatives = 0;
-%         var int: currentNegatives = 0;
-%     }in
-%     (
-%         forall(i in 1..2*(n-1))(
-%             if Cal[i,j] < 0 then
-%                 currentNegatives = currentNegativess + 1 /\
-%                 maxNegatives = max(maxNegatives, currentNegatives)
-%             else
-%                 minNegatives = min(minNegatives, currentNegatives) /\
-%                 currentNegatives = 0
-%             endif;
-%         consecutiveNegatives = [minNegatives, maxNegatives]
-%         )
-%     )
-%     (
-%         minConsecutiveNegatives[j],
-%         maxConsecutiveNegatives[j]
-%     )
-% );
-
-
-%Garantiza que toda permanencia se encuentre en el rango [Min,Max]
-constraint forall(j in 1..n)(
-  sum(i in 1..2*(n-1)-1)(if Cal[i,j] > 0 /\ Cal[i+1,j] > 0 then 1 else 0 endif)+1 >= Min /\
-  sum(i in 1..2*(n-1)-1)(if Cal[i,j] > 0 /\ Cal[i+1,j] > 0 then 1 else 0 endif)+1 <= Max 
-  
 );
 
 %Garantiza que hayan n/2 partidos por fecha.
@@ -117,7 +106,7 @@ constraint forall(j in 1..n) (
         endif
         endif
        )  
-    );
+);
 
 
 constraint forall(j in 1..n) (
