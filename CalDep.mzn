@@ -12,6 +12,8 @@ array[1..n] of var int: sum_costos;
 array[1..2*(n-1), 1..n] of var 0..n: ConteoPerm;
 array[1..2*(n-1), 1..n] of var 0..n: ConteoGira;
 
+array[1..2*(n-1), 1..n] of var 0..n: Perm;
+array[1..2*(n-1), 1..n] of var 0..n: Gira;
 
 
 %Calculando ConteoPerm
@@ -22,12 +24,18 @@ constraint forall (e in 1..n, f in 2..2*(n-1)) (if Cal[f,e]>0 then
                   (ConteoPerm[f,e]=ConteoPerm[f-1,e]+1) 
                   else (ConteoPerm[f,e]=0) endif);
 
+constraint forall (e in 1..n, f in 1..2*(n-1)-1) (if ConteoPerm[f,e]>ConteoPerm[f+1,e] then 
+                  (Perm[f,e]=ConteoPerm[f,e]) 
+                  else (Perm[f,e]=0) endif);
+                  
+constraint forall (e in 1..n) (Perm[2*(n-1),e]=ConteoPerm[2*(n-1),e]);
+
+
 % Restringiendo las permanencias a ser inferiores o iguales a Max
-constraint forall (e in 1..n) (max([ConteoPerm[f,e]| f in 1..2*(n-1) where ConteoPerm[f,e]>0]) <= Max);
+constraint forall (e in 1..n) (max([Perm[f,e]| f in 1..2*(n-1) where Perm[f,e]>0]) <= Max);
 
 % Restringiendo las permanencias a ser superiores o iguales a Min
-constraint forall (e in 1..n) (min([ConteoPerm[f,e]| f in 1..2*(n-1) where ConteoPerm[f,e]>0]) >= Min);
-
+constraint forall (e in 1..n) (min([Perm[f,e]| f in 1..2*(n-1) where Perm[f,e]>0]) >= Min);
 %----------------------------------------------------------------------
 
 %Calculando ConteoGira
@@ -38,11 +46,18 @@ constraint forall (e in 1..n, f in 2..2*(n-1)) (if Cal[f,e]<0 then
                   (ConteoGira[f,e]=ConteoGira[f-1,e]+1) 
                   else (ConteoGira[f,e]=0) endif);
 
-% Restringiendo las giras a ser inferiores o iguales a Max
-constraint forall (e in 1..n) (max([ConteoGira[f,e]| f in 1..2*(n-1) where ConteoGira[f,e]>0]) <= Max);
+constraint forall (e in 1..n, f in 1..2*(n-1)-1) (if ConteoGira[f,e]>ConteoGira[f+1,e] then 
+                  (Gira[f,e]=ConteoGira[f,e]) 
+                  else (Gira[f,e]=0) endif);
+                  
+constraint forall (e in 1..n) (Gira[2*(n-1),e]=ConteoGira[2*(n-1),e]);
 
-% Restringiendo las giras a ser superiores o iguales a Min
-constraint forall (e in 1..n) (min([ConteoGira[f,e]| f in 1..2*(n-1) where ConteoGira[f,e]>0]) >= Min);
+
+% Restringiendo las permanencias a ser inferiores o iguales a Max
+constraint forall (e in 1..n) (max([Gira[f,e]| f in 1..2*(n-1) where Gira[f,e]>0]) <= Max);
+
+% Restringiendo las permanencias a ser superiores o iguales a Min
+constraint forall (e in 1..n) (min([Gira[f,e]| f in 1..2*(n-1) where Gira[f,e]>0]) >= Min);
 
 
 %-------------------------------------------------------
@@ -114,3 +129,5 @@ constraint forall(j in 1..n) (
 );
 
 solve minimize sum([sum_costos[j]| j in 1..n]);
+
+
