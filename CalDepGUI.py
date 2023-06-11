@@ -41,7 +41,11 @@ def create_data_file(n, Min, Max, D):
 def execute_model(n, Min, Max, D):
     try:
         output = subprocess.check_output(["minizinc", "CalDep.mzn", "--data", "data.dzn"])
-        # ...
+
+        # Extraer la matriz "Cal" de la salida
+        cal_start_index = output.decode().find("Cal=[") + 5
+        cal_end_index = output.decode().find("];", cal_start_index)
+        cal_matrix = output.decode()[cal_start_index:cal_end_index]
 
         # Mostrar la entrada en el panel correspondiente
         text_input.delete("1.0", tk.END)
@@ -54,7 +58,7 @@ def execute_model(n, Min, Max, D):
         # Mostrar la salida en el panel correspondiente
         text_output.delete("1.0", tk.END)
         text_output.insert(tk.END, f"Salida:\n\n")
-        text_output.insert(tk.END, output.decode())
+        text_output.insert(tk.END, f"Cal={cal_matrix}]")  # Agregar el corchete "]" al final
 
     except subprocess.CalledProcessError as e:
         # Manejar el caso de error en la ejecución del modelo
@@ -63,13 +67,25 @@ def execute_model(n, Min, Max, D):
         text_output.insert(tk.END, f"Error en la ejecución del modelo:\n{error_message}")
 
 
-# Crear la ventana principal
+
+
+# Crea la ventana principal
 window = tk.Tk()
 window.title("ADAII - CalDep")
 
 # Estilo de la interfaz
 style = ttk.Style()
-style.theme_use("clam")
+style.theme_use("clam") # ("clam", "alt", "default", "classic")
+
+# Cambia el estilo del botón "Cargar archivo .dzn"
+style.configure("Custom.TButton", foreground="white", background="red", 
+                font=("Helvetica", 12, "bold"), 
+                relief="raised", 
+                borderwidth=3, 
+                padding=10, 
+                width=20,
+                hoverbackground="green",
+                hoverforeground="red")
 
 # Dividir la ventana en dos paneles
 frame_input = ttk.Frame(window, padding=10)
@@ -77,12 +93,12 @@ frame_input.grid(row=0, column=0, sticky="nsew")
 frame_output = ttk.Frame(window, padding=10)
 frame_output.grid(row=0, column=1, sticky="nsew")
 
-# Crear el botón para seleccionar el archivo .dzn
+# Crea el botón para seleccionar el archivo .dzn
 button_select_dzn = ttk.Button(
-    frame_input, text="Cargar archivo .dzn", command=select_dzn_file)
+    frame_input, text="Cargar archivo .dzn", command=select_dzn_file, style="Custom.TButton", cursor="hand2")
 button_select_dzn.pack(pady=10)
 
-# Crear el panel de entrada
+# Crea el panel de entrada
 label_input = ttk.Label(frame_input, text="Entrada")
 label_input.pack()
 scrollbar_input = ttk.Scrollbar(frame_input)
@@ -92,17 +108,17 @@ text_input = tk.Text(
 text_input.pack()
 scrollbar_input.config(command=text_input.yview)
 
-# Crear el panel de salida
+# Crea el panel de salida
 label_output = ttk.Label(frame_output, text="Salida")
 label_output.pack()
 scrollbar_output = ttk.Scrollbar(frame_output)
-scrollbar_output.pack(side="right", fill="y")
+scrollbar_output.pack(side="right", fill="y") 
 text_output = tk.Text(
     frame_output, height=15, width=50, yscrollcommand=scrollbar_output.set)
 text_output.pack()
 scrollbar_output.config(command=text_output.yview)
 
-# Hacer que los paneles se expandan con la ventana principal
+# Expande los paneles para que ocupen todo el espacio disponible no funciona bien jajjaja
 window.grid_rowconfigure(0, weight=1)
 window.grid_columnconfigure(0, weight=1)
 window.grid_columnconfigure(1, weight=1)
