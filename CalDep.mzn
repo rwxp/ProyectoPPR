@@ -1,9 +1,9 @@
 % Use this editor as a MiniZinc scratch book
 
 int: n;
-array [1..n, 1..n] of int: D;
 int: Min;
 int: Max;
+array [1..n, 1..n] of int: D;
 %Recordar que se debe incluir los negativos en el dominio.
 array [1..2*(n-1), 1..n] of var -n..n: Cal;
 array [1..2*(n-1)+1, 1..n ] of var int: Costos;
