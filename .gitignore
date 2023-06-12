@@ -1,3 +1,4 @@
 # ignorar env 
 env/
+.venv/
 ```
