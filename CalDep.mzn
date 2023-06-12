@@ -1,5 +1,5 @@
 % Use this editor as a MiniZinc scratch book
-
+include "globals.mzn";
 int: n;
 array [1..n, 1..n] of int: D;
 int: Min;
@@ -61,14 +61,16 @@ constraint forall (e in 1..n) (min([Gira[f,e]| f in 1..2*(n-1) where Gira[f,e]>0
 
 %-------------------------------------------------------
 
+%Garantiza que todos los elemntos de las columnas de Cal sean dftes.
+constraint forall(i in 1..2*(n-1)) (
+    alldifferent([Cal[i, j] | j in 1..n])
+    );
+
+
 %Garantiza que todos los elemntos de las filas de Cal sean dftes.
-constraint forall(i in 1..2*(n-1), j in 1..n, k in 1..n where j != k) (
-   Cal[i,j] != Cal[i,k]
-);
-%Garantiza que todos los elementos de las columnas de Cal sean dftes.
-constraint forall(j in 1..n, k in 1..2*(n-1), l in 1..2*(n-1) where k != l) (
-   Cal[k,j] != Cal[l,j]
-);
+
+constraint forall(j in 1..n) (
+    alldifferent([Cal[i, j] | i in 1..2*(n-1)]));
 
 %Garantiza que todos los elementos de la matriz sean dftes de cero.
 constraint forall(i in 1..2*(n-1), j in 1..n)(
@@ -85,7 +87,10 @@ constraint forall(j in 1..n, k in 1..n where j!=k)(
 constraint forall(i in 1..2*(n-1))(
       sum([bool2int(Cal[i, j] > 0) | j in 1..n]) = n/2
 );
-
+%Se usa para que primero se jueguen los partidos de ida y luego los de vuelta.
+constraint forall(j in 1..n )(
+  sum([abs(Cal[i,j]) | i in 1..n-1])= n*(n+1)/2-j);
+  
 %Garantiza que Cal[i,j]=k <-> Cal[i,k]=-j Si uno juega de local
 % entonces el otro juega de visitante contra  mi.
 constraint forall(i in 1..2*(n-1), j in 1..n, k in 1..n where k!= j)(
