@@ -151,4 +151,3 @@ constraint forall(j in 1..n) (
 
 solve minimize sum([sum_costos[j]| j in 1..n]);
 
-
