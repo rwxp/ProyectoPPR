@@ -14,6 +14,8 @@ En el repositorio se entrega, el modelo, llamado ```CalDep.mzn```, y un archivo 
 
 En la carpeta CalDepGUIFuentes se encuentra el archivo ```CalDepGUI.py```, el cual contiene la interfaz del programa.
 
+En la carpeta DatosCalDep se incluyen los archivos con los que fue probado el modelo (batería).
+
 En la carpeta MisInstancias se incluyen 5 archivos de prueba utilizados en el modelo (diferentes de los archivos dados).
 
 El archivo ```requirements.txt``` contiene los requerimientos que se deben instalar para ejecutar el programa
