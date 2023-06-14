@@ -9,6 +9,14 @@ Este repositorio contiene el código para solucionar el problema de planificaci�
 - Moyano Gonzalez Laura - 2023906
 - Montaño Zalazar Geider - 1840292
 
+### Contenido de la entrega
+En el repositorio se entrega, el modelo, llamado ```CalDep.mzn```, y un archivo de datos utilizado para escribir la información que se lee en los archivos de prueba, llamado ```DatosCalDep.mzn```, este varía durante la ejecución del programa.
+En la carpeta CalDepGUIFuentes se encuentra el archivo ```CalDepGUI.py```, el cual contiene la interfaz del programa.
+En la carpeta MisInstancias se incluyen 5 archivos de prueba utilizados en el modelo (diferentes de los archivos dados).
+El archivo ```requirements.txt``` contiene los requerimientos que se deben instalar para ejecutar el programa
+
+**Nota:** En la carpeta CalDepGUIFuentes también se encuentran los archivos del modelo y datos, esto por si se quiere ejecutar el archivo de la interfaz gráfica desde el directorio CalDepGUIFuentes.
+
 # ```Instrucciones de uso```
 - Clonar el repositorio
 ```

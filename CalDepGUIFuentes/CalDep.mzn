@@ -117,7 +117,7 @@ constraint forall(i in 1..2*(n-1), j in 1..n)(
 
 %Garantiza que no se jueguen partidos repetidos en dos fechas consecutivas.
 constraint forall(j in 1..n)(
- forall(i in 1..n-1)(
+ forall(i in 1..2*(n-1)-1)(
   abs(Cal[i,j]) != abs(Cal[i+1,j]) 
   )
 );
@@ -125,7 +125,7 @@ constraint forall(j in 1..n)(
 
 %Se usa para que primero se jueguen los partidos de ida y luego los de vuelta.
 constraint forall(j in 1..n)(
-  alldifferent( [abs(Cal[i,j]) | i in 1..n-1 where Cal[i,j] != j ] )  
+  alldifferent( [abs(Cal[i,j]) | i in 1..n-1 where abs(Cal[i,j]) != j ] )  
   
 );
 
