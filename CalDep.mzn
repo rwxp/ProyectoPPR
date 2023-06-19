@@ -1,18 +1,21 @@
 % Use this editor as a MiniZinc scratch book
 include "globals.mzn";
+
 int: n;
 array [1..n, 1..n] of int: D;
 int: Min;
 int: Max;
 %Recordar que se debe incluir los negativos en el dominio.
+
 array [1..2*(n-1), 1..n] of var -n..n: Cal;
-array [1..2*(n-1)+1, 1..n ] of var int: Costos;
-array[1..n] of var int: sum_costos;
+array [1..2*(n-1)+1, 1..n ] of var 0..max(D): Costos;
+array[1..n] of var int: sumCostos;
+var int: costoTotal;
 array[1..2*(n-1), 1..n] of var 0..n: ConteoPerm;
 array[1..2*(n-1), 1..n] of var 0..n: ConteoGira;
-
 array[1..2*(n-1), 1..n] of var 0..n: Perm;
 array[1..2*(n-1), 1..n] of var 0..n: Gira;
+
 
 
 %Calculando ConteoPerm
@@ -52,23 +55,19 @@ constraint forall (e in 1..n, f in 1..2*(n-1)-1) (if ConteoGira[f,e]>ConteoGira[
 constraint forall (e in 1..n) (Gira[2*(n-1),e]=ConteoGira[2*(n-1),e]);
 
 
-% Restringiendo las permanencias a ser inferiores o iguales a Max
+% Restringiendo las giras a ser inferiores o iguales a Max
 constraint forall (e in 1..n) (max([Gira[f,e]| f in 1..2*(n-1) where Gira[f,e]>0]) <= Max);
 
-% Restringiendo las permanencias a ser superiores o iguales a Min
+% Restringiendo las giras a ser superiores o iguales a Min
 constraint forall (e in 1..n) (min([Gira[f,e]| f in 1..2*(n-1) where Gira[f,e]>0]) >= Min);
-
 
 %-------------------------------------------------------
 
 %Garantiza que todos los elemntos de las columnas de Cal sean dftes.
 constraint forall(i in 1..2*(n-1)) (
-    alldifferent([Cal[i, j] | j in 1..n])
-    );
-
+    alldifferent([Cal[i, j] | j in 1..n]));
 
 %Garantiza que todos los elemntos de las filas de Cal sean dftes.
-
 constraint forall(j in 1..n) (
     alldifferent([Cal[i, j] | i in 1..2*(n-1)]));
 
@@ -83,39 +82,52 @@ constraint forall(j in 1..n, k in 1..n where j!=k)(
   )
 );
 
-%Garantiza que hayan n/2 partidos por fecha.
+%Garantiza que hayan n/2 partidos de local por fecha.
 constraint forall(i in 1..2*(n-1))(
       sum([bool2int(Cal[i, j] > 0) | j in 1..n]) = n/2
 );
-%Se usa para que primero se jueguen los partidos de ida y luego los de vuelta.
-constraint forall(j in 1..n )(
-  sum([abs(Cal[i,j]) | i in 1..n-1])= n*(n+1)/2-j);
-  
-%Garantiza que Cal[i,j]=k <-> Cal[i,k]=-j Si uno juega de local
-% entonces el otro juega de visitante contra  mi.
-constraint forall(i in 1..2*(n-1), j in 1..n, k in 1..n where k!= j)(
-  (Cal[i,j] = k) <-> (Cal[i,k] = -j)
-);
-%Garantiza que no se jueguen partidos repetidos en dos fechas consecutivas.
-constraint forall(j in 1..n, i in 1..2*(n-1)-1)(
-  abs(Cal[i,j]) != abs(Cal[i+1,j]) 
-);
-constraint forall(j in 1..n)(
-   if Cal[1, j] < 0 then 
-     Costos[1,j] =  D[j, abs(Cal[1,j])]
-   else
-     Costos[1,j] = 0
-   endif
-   
+
+%Garantiza que hayan n/2 partidos de gira por fecha.
+constraint forall(i in 1..2*(n-1))(
+      sum([bool2int(Cal[i, j] < 0) | j in 1..n]) = n/2
 );
 
+
+%Garantiza que hayan n-1 partidos por equipo de permanencia
 constraint forall(j in 1..n)(
-  if Cal[2*(n-1), j] < 0 then
-      Costos[2*(n-1)+1, j] = D[abs(Cal[2*(n-1), j]), j]
-   else
-     Costos[2*(n-1)+1, j] = 0 
-   endif
+      sum([bool2int(Cal[i, j] > 0) | i in 1..2*(n-1)]) = n-1
 );
+%Garantiza que hayan n-1  partidos por equipo de gira 
+constraint forall(j in 1..n)(
+      sum([bool2int(Cal[i, j] < 0) | i in 1..2*(n-1)]) = n-1
+);
+
+%Garantiza que exista el inverso aditivo para cada partido programado en una misma fecha
+constraint forall(i in 1..2*(n-1), j in 1..n)(
+  (Cal[i,j] > 0 )  -> (Cal[i,Cal[i,j]] = -j)  
+);
+%Garantiza que exista el inverso aditivo para cada partido programado en una misma fecha
+constraint forall(i in 1..2*(n-1), j in 1..n)(
+  (Cal[i,j] < 0 )  -> (Cal[i,abs(Cal[i,j])] = j)
+  
+);
+
+%Garantiza que no se jueguen partidos repetidos en dos fechas consecutivas.
+constraint forall(j in 1..n)(
+ forall(i in 1..2*(n-1)-1)(
+  abs(Cal[i,j]) != abs(Cal[i+1,j]) 
+  )
+);
+
+
+%Se usa para que primero se jueguen los partidos de ida y luego los de vuelta.
+constraint forall(j in 1..n)(
+  alldifferent([abs(Cal[i,j]) | i in 1..n-1 where abs(Cal[i,j]) != j ] )  
+  
+);
+  
+
+
 
 constraint forall(j in 1..n) (
        forall(i in 1..2*(n-1)+1)(
@@ -145,9 +157,16 @@ constraint forall(j in 1..n) (
 );
 
 
+
 constraint forall(j in 1..n) (
-    sum_costos[j] = sum([Costos[i,j] | i in 1..2*(n-1)+1])
+    sumCostos[j] = sum([Costos[i,j] | i in 1..2*(n-1)+1])
 );
 
-solve minimize sum([sum_costos[j]| j in 1..n]);
+constraint  costoTotal = sum([sumCostos[j] | j in 1..n]);
+
+% Búsqueda local
+solve minimize costoTotal;
+
+     
+
 
