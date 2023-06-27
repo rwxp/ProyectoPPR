@@ -79,7 +79,7 @@ def execute_model():
         # instance["Max"] = Max
         # instance["D"] = D
         start = datetime.datetime.now()
-        result = instance.solve(timeout=datetime.timedelta(seconds=210))
+        result = instance.solve(timeout=datetime.timedelta(seconds=120))
         end = datetime.datetime.now()
 
         if result:
@@ -93,7 +93,7 @@ def execute_model():
                 text_output.insert(tk.END, f"      {row}\n")
             text_output.insert(tk.END, f"\n")
 
-        elif end - start < datetime.timedelta(seconds=220):
+        elif end - start < datetime.timedelta(seconds=130):
             text_output.insert(tk.END, f"Solución NO encontrada:\n\n")
             text_output.insert(tk.END, f"EL PROBLEMA ES INSATISFACIBLE\n\n")
         else:
