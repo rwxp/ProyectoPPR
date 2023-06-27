@@ -1,6 +1,5 @@
 % Use this editor as a MiniZinc scratch book
 include "globals.mzn";
-
 int: n;
 array [1..n, 1..n] of int: D;
 int: Min;
@@ -17,11 +16,13 @@ array[1..2*(n-1), 1..n] of var 0..n: Perm;
 array[1..2*(n-1), 1..n] of var 0..n: Gira;
 
 
-
 %Calculando ConteoPerm
+
+%calculando las permanencias en la priimera fecha para todos los equipos  
 constraint forall (e in 1..n) (if Cal[1,e]>0 then (ConteoPerm[1,e]=1) 
                                else (ConteoPerm[1,e]=0) endif);
-                               
+                
+%calculando las permanencias en el resto de fechas para todos los equipos                                 
 constraint forall (e in 1..n, f in 2..2*(n-1)) (if Cal[f,e]>0 then 
                   (ConteoPerm[f,e]=ConteoPerm[f-1,e]+1) 
                   else (ConteoPerm[f,e]=0) endif);
@@ -41,9 +42,12 @@ constraint forall (e in 1..n) (min([Perm[f,e]| f in 1..2*(n-1) where Perm[f,e]>0
 %----------------------------------------------------------------------
 
 %Calculando ConteoGira
+
+%calculando las giras en la priimera fecha para todos los equipos  
 constraint forall (e in 1..n) (if Cal[1,e]<0 then (ConteoGira[1,e]=1) 
                                else (ConteoGira[1,e]=0) endif);
                                
+%calculando las giras en el resto de fechas para todos los equipos  
 constraint forall (e in 1..n, f in 2..2*(n-1)) (if Cal[f,e]<0 then 
                   (ConteoGira[f,e]=ConteoGira[f-1,e]+1) 
                   else (ConteoGira[f,e]=0) endif);
@@ -63,42 +67,33 @@ constraint forall (e in 1..n) (min([Gira[f,e]| f in 1..2*(n-1) where Gira[f,e]>0
 
 %-------------------------------------------------------
 
-%Garantiza que todos los elemntos de las columnas de Cal sean dftes.
-constraint forall(i in 1..2*(n-1)) (
-    alldifferent([Cal[i, j] | j in 1..n]));
-
-%Garantiza que todos los elemntos de las filas de Cal sean dftes.
-constraint forall(j in 1..n) (
-     alldifferent([Cal[i, j] | i in 1..2*(n-1)]));
-
-
 %Garantiza que todos los elementos de la matriz Cal sean dftes de cero.
  constraint forall(i in 1..2*(n-1), j in 1..n)(
    Cal[i,j] != 0
  );
-
-
-%Garantiza que exista el inverso aditivo para cada partido programado.
-% constraint forall(j in 1..n, k in 1..n where j!=k)(
-%   exists(i1, i2 in 1..2*(n-1))(
-%       Cal[i1,j]==k /\ Cal[i2,j]==-k
-%   )
-% );
+ 
+ constraint forall(j in 1..n, k in 1..n where k != j) (
+    exists(i1, i2 in 1..2*(n-1)) (
+        Cal[i1, j] = k /\ Cal[i2, j] = -k
+    )
+);
 
 %Garantiza que hayan n-1 partidos por equipo de permanencia
 constraint forall(j in 1..n)(
       sum([bool2int(Cal[i, j] > 0) | i in 1..2*(n-1)]) = n-1
 );
+
 %Garantiza que hayan n-1  partidos por equipo de gira 
 constraint forall(j in 1..n)(
       sum([bool2int(Cal[i, j] < 0) | i in 1..2*(n-1)]) = n-1
 );
 
-%Garantiza que hayan n/2 partidos de local por fecha.
+%Garantiza que hayan n/2 partidos de gira por fecha.
 constraint forall(i in 1..2*(n-1))(
       sum([bool2int(Cal[i, j] > 0) | j in 1..n]) = n/2
 );
 
+%Garantiza que hayan n/2 partidos de local por fecha.
 constraint forall(i in 1..2*(n-1))(
       sum([bool2int(Cal[i, j] < 0) | j in 1..n]) = n/2
 );
@@ -111,7 +106,6 @@ constraint forall(i in 1..2*(n-1)) (
     (Cal[i,j] = k) <-> (Cal[i,k] = -j)
   )
 );
-
 %Garantiza que no se jueguen partidos repetidos en dos fechas consecutivas.
 constraint forall(j in 1..n) ( 
   forall( i in 1..2*(n-1)-1)(
@@ -126,20 +120,44 @@ constraint forall(j in 1..n) ( forall( i in 1..2*(n-1))(
 );
 
 
+%Rompe simetrías y restricciones redundantes.
+
+%Garantiza que todos los elemntos de las columnas de Cal sean dftes.
+constraint forall(i in 1..2*(n-1)) (
+    alldifferent([Cal[i, j] | j in 1..n])
+    );
+
+%Garantiza que todos los elemntos de las filas de Cal sean dftes.
+constraint forall(j in 1..n) (
+     alldifferent([Cal[i, j] | i in 1..2*(n-1)]));
+     
+
+% la suma de todos los partidos en una fecha debe ser 0
+constraint forall(j in 1..n)(
+sum([Cal[i,j]|i in 1..2*(n-1)]) = 0
+);
+
 %Se usa para que primero se jueguen los partidos de ida y luego los de vuelta.
 constraint forall(j in 1..n)(
   alldifferent([abs(Cal[i,j]) | i in 1..n-1 where abs(Cal[i,j]) != j ] )  
   
 );
-  
 
+%Garantiza que los valores absolutos de cal sean mayores a 1 y menores a n
+constraint forall(i in 1..2*(n-1))(
+  forall(j in 1..n)(
+  abs(Cal[i,j]) >= 1 /\ abs(Cal[i,j]) <= n)
+);
 
+%Garantiza que la suma de toda la matriz sea 0
+constraint sum(Cal) = 0;
 
-%Rompe simetrías
+%Asegura que el primer partido del primer equipo es de local
 constraint Cal[1,1] > 0;
 
 
 
+%Diseño de la función objetivo para calcular los costos de las distancias
 constraint forall(j in 1..n) (
        forall(i in 1..2*(n-1)+1)(
         if i = 1 /\ Cal[i,j] < 0 then
@@ -167,15 +185,19 @@ constraint forall(j in 1..n) (
        )  
 );
 
-
-
+%Se calcula la suma de las distancias de cada equipo
 constraint forall(j in 1..n) (
     sumCostos[j] = sum([Costos[i,j] | i in 1..2*(n-1)+1])
 );
 
+%se suman todas las distancias de todos los equipos
 constraint costoTotal = sum(sumCostos);
 
+
+%corre la 16_4
 %solve :: int_search(Cal, input_order, indomain_min, complete) minimize costoTotal;
+
+solve :: int_search(Cal, first_fail, indomain_median, complete) minimize costoTotal;
 
 
 %12_0
@@ -184,8 +206,5 @@ constraint costoTotal = sum(sumCostos);
 %solve :: int_search(Cal, smallest, indomain_median, complete) minimize costoTotal;
 %16_0
 %solve :: int_search(Cal, smallest, indomain_split, complete) minimize costoTotal;
-%16_1 16_2 16_3 16_4
-solve :: int_search(Cal, first_fail, indomain_min, complete) minimize costoTotal;
-
-
-
+%16_1 16_2
+%solve :: int_search(Cal, first_fail, indomain_min, complete) minimize costoTotal;
